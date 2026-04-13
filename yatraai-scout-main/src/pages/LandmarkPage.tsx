@@ -21,8 +21,8 @@ const LandmarkPage = () => {
     formData.append("image", fileToUpload);
 
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:5001";
-      const response = await fetch(`${backendUrl}/predict`, {
+      // Use /api/predict which Vercel proxies to Leapcell server-side (no CORS)
+      const response = await fetch(`/api/predict`, {
         method: "POST",
         body: formData,
       });
