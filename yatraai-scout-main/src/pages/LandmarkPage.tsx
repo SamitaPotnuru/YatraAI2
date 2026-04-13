@@ -21,7 +21,8 @@ const LandmarkPage = () => {
     formData.append("image", fileToUpload);
 
     try {
-      const response = await fetch("http://127.0.0.1:5001/predict", {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:5001";
+      const response = await fetch(`${backendUrl}/predict`, {
         method: "POST",
         body: formData,
       });
@@ -36,7 +37,7 @@ const LandmarkPage = () => {
       console.error(error);
       setResult({
         name: "Identification Failed",
-        description: "Server error. Check if the local backend ML server is running on port 5001.",
+        description: "Server error. Check if the AI backend server is running and configured correctly.",
       });
     } finally {
       setScanning(false);
