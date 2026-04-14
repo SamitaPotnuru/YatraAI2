@@ -1,28 +1,25 @@
-# Dependencies
+# Dependency directories
 node_modules/
-.pnp
-.pnp.js
+venv/
+env/
+.venv/
 
 # Build outputs
 dist/
+dist-ssr/
 build/
 
-# Sensitive files
+# Environment files (SENSITIVE - Never upload these to GitHub)
 .env
 .env.local
-.env.production
+.env.*.local
+*.env
+.flaskenv
 
-# Vite cache
-.vite/
-
-# OS
+# OS Files
 .DS_Store
 Thumbs.db
 
-# IDE
+# IDE Files
 .vscode/
 .idea/
-
-# Logs
-*.log
-npm-debug.log*
