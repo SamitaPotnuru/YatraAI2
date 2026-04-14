@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
-import { AccountBalanceWallet as Wallet, Add as Plus, Delete as Trash2 } from "@mui/icons-material";
+import { AccountBalanceWallet as Wallet, Add as Plus, Delete as Trash2, Edit } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/integrations/firebase/config";
-import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, orderBy } from "firebase/firestore";
+import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, orderBy, updateDoc } from "firebase/firestore";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 
@@ -35,6 +35,7 @@ const BudgetPage = () => {
   const [category, setCategory] = useState("food");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -80,7 +81,38 @@ const BudgetPage = () => {
   const deleteExpense = async (id: string) => {
     try {
       await deleteDoc(doc(db, "expenses", id));
+      if (editingId === id) cancelEdit();
       toast({ title: "Deleted", description: "Expense removed successfully." });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const startEdit = (expense: Expense) => {
+    setEditingId(expense.id);
+    setCategory(expense.category);
+    setAmount(expense.amount.toString());
+    setDescription(expense.description || "");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setCategory("food");
+    setAmount("");
+    setDescription("");
+  };
+
+  const updateExpense = async () => {
+    if (!amount || !user || !editingId) return;
+    try {
+      await updateDoc(doc(db, "expenses", editingId), {
+        category,
+        amount: parseFloat(amount),
+        description: description || null,
+      });
+      cancelEdit();
+      toast({ title: "Expense Updated", description: "Productive change! Your record is updated." });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -102,7 +134,9 @@ const BudgetPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="glass-card-solid rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Add Expense</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">
+              {editingId ? "Edit Expense" : "Add Expense"}
+            </h2>
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
                 {categories.map((c) => (
@@ -119,9 +153,20 @@ const BudgetPage = () => {
               </div>
               <Input type="number" placeholder="Amount (₹)" value={amount} onChange={(e) => setAmount(e.target.value)} />
               <Input placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
-              <Button onClick={addExpense} className="w-full gradient-primary-bg text-primary-foreground border-0">
-                <Plus fontSize="small" className="mr-2" /> Add Expense
-              </Button>
+              <div className="flex gap-2">
+                {editingId && (
+                  <Button variant="outline" onClick={cancelEdit} className="w-1/3">
+                    Cancel
+                  </Button>
+                )}
+                <Button 
+                  onClick={editingId ? updateExpense : addExpense} 
+                  className={`${editingId ? "w-2/3" : "w-full"} gradient-primary-bg text-primary-foreground border-0`}
+                >
+                  {editingId ? <Edit fontSize="small" className="mr-2" /> : <Plus fontSize="small" className="mr-2" />}
+                  {editingId ? "Update Expense" : "Add Expense"}
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -192,9 +237,14 @@ const BudgetPage = () => {
                     </span>
                     {e.description && <p className="text-xs text-muted-foreground">{e.description}</p>}
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => deleteExpense(e.id)}>
-                    <Trash2 fontSize="small" className="text-destructive" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => startEdit(e)}>
+                      <Edit fontSize="small" className="text-muted-foreground hover:text-accent" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => deleteExpense(e.id)}>
+                      <Trash2 fontSize="small" className="text-destructive" />
+                    </Button>
+                  </div>
                 </motion.div>
               ))}
             </div>

@@ -1,6 +1,8 @@
-import { motion } from "framer-motion";
-import { Cloud, WaterDrop as Droplets, Air as Wind, Thermostat as Thermometer } from "@mui/icons-material";
+import { motion, AnimatePresence } from "framer-motion";
+import { Cloud, WaterDrop as Droplets, Air as Wind, Thermostat as Thermometer, Search } from "@mui/icons-material";
 import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface WeatherData {
   temperature: number;
@@ -14,6 +16,36 @@ const WeatherPage = () => {
   const [city, setCity] = useState("Delhi");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    try {
+      const res = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery)}&count=1&language=en&format=json`
+      );
+      const data = await res.json();
+      
+      if (data.results && data.results.length > 0) {
+        const result = data.results[0];
+        setCity(result.name);
+        if (!cities[result.name]) {
+          fetchWeather(result.latitude, result.longitude);
+        }
+        setSearchQuery("");
+      } else {
+        toast.error("City not found. Please try another name.");
+      }
+    } catch (error) {
+      toast.error("Failed to search city. Check your connection.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const fetchWeather = async (lat: number, lon: number) => {
     setLoading(true);
@@ -63,6 +95,25 @@ const WeatherPage = () => {
           <Cloud fontSize="large" className="text-accent" /> Weather Intelligence
         </h1>
         <p className="text-muted-foreground mb-8">Real-time weather data powered by Open-Meteo</p>
+
+        <form onSubmit={handleSearch} className="relative mb-8 max-w-md group">
+          <Input
+            type="text"
+            placeholder="Search for a city..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="glass-card-solid border-white/10 focus:border-accent/50 transition-all pl-10 h-12 bg-black/20 backdrop-blur-md rounded-xl"
+          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-accent transition-colors" fontSize="small" />
+          <button
+            type="submit"
+            disabled={isSearching}
+            className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-accent/20 hover:bg-accent/40 text-accent rounded-lg text-xs font-medium transition-all backdrop-blur-sm"
+          >
+            {isSearching ? "Searching..." : "Search"}
+          </button>
+        </form>
+
         <div className="flex flex-wrap gap-2 mb-6">
           {Object.keys(cities).map((c) => (
             <button
