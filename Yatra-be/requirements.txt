@@ -1,0 +1,6 @@
+flask>=3.0
+numpy
+Pillow
+python-dotenv
+requests>=2.28
+waitress

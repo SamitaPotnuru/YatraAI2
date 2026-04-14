@@ -1,0 +1,22 @@
+# Dependency directories
+node_modules/
+Yatra-be/venv/
+Yatra-be/__pycache__/
+dist/
+dist-ssr/
+build/
+
+# Environment Variables (CRITICAL: Private keys)
+.env
+.env.*
+!.env.example
+Yatra-fe/yatraai-scout-main/.env
+Yatra-fe/yatraai-scout-main/.env.*
+
+# Logs
+logs/
+*.log
+
+# OS Metadata
+.DS_Store
+Thumbs.db
